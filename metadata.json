@@ -1,0 +1,6 @@
+{
+  "name": "TropiVault",
+  "description": "Tropical Agriculture Marketplace & Food Preservation Management System connecting farmers, clients, businesses, and riders.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
