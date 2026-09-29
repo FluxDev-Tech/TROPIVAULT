@@ -26,6 +26,7 @@ import com.example.tropivault.data.local.OrderEntity
 import com.example.tropivault.ui.Screen
 import com.example.tropivault.ui.TropiVaultViewModel
 import com.example.tropivault.ui.components.StatusBadge
+import com.example.tropivault.ui.components.TropiVaultDeliveryMap
 import com.example.tropivault.ui.theme.*
 
 /**
@@ -96,7 +97,7 @@ fun ClientDashboardScreen(
 
         AlertDialog(
             onDismissRequest = { showTopUpDialog = false },
-            title = { Text("Top Up TropiVault Credits", fontWeight = FontWeight.Bold) },
+            title = { Text("Top Up FarmVault Credits", fontWeight = FontWeight.Bold) },
             text = {
                 Column {
                     Text("Add store credits for fast 1-tap checkout via GCash:", fontSize = 12.sp)
@@ -123,7 +124,7 @@ fun ClientDashboardScreen(
                     onClick = {
                         val amount = topUpAmountText.toDoubleOrNull() ?: 500.0
                         walletCredits += amount
-                        topUpSuccessNotice = "₱%.2f added to your TropiVault wallet balance!".format(amount)
+                        topUpSuccessNotice = "₱%.2f added to your FarmVault wallet balance!".format(amount)
                         showTopUpDialog = false
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = FreshGreen)
@@ -150,7 +151,7 @@ fun ClientDashboardScreen(
                     if (supportTicketSent) {
                         Text("Ticket logged successfully! An agronomist will reach out via email or phone.", color = FreshGreen)
                     } else {
-                        Text("Connect directly with TropiVault's post-harvest logistics specialists:")
+                        Text("Connect directly with FarmVault's post-harvest logistics specialists:")
                         Spacer(modifier = Modifier.height(10.dp))
                         OutlinedTextField(
                             value = ticketTopic,
@@ -278,7 +279,7 @@ fun ClientDashboardScreen(
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Column {
-                                    Text("TropiVault Balance", fontSize = 11.sp, color = GoldenYellow)
+                                    Text("FarmVault Balance", fontSize = 11.sp, color = GoldenYellow)
                                     Text(
                                         text = "₱%.2f".format(walletCredits),
                                         fontWeight = FontWeight.ExtraBold,
@@ -604,15 +605,42 @@ fun ActiveClientOrderCard(order: OrderEntity) {
 
             Spacer(modifier = Modifier.height(10.dp))
 
-            if (order.riderName != null) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Default.TwoWheeler, contentDescription = null, tint = ForestGreen, modifier = Modifier.size(16.dp))
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text("Rider: ${order.riderName}", fontSize = 11.sp, color = DeepGreen, fontWeight = FontWeight.SemiBold)
+            var showLiveMap by remember { mutableStateOf(order.orderStatus == "IN_TRANSIT" || order.orderStatus == "PROCESSING") }
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                if (order.riderName != null) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Default.TwoWheeler, contentDescription = null, tint = ForestGreen, modifier = Modifier.size(16.dp))
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text("Rider: ${order.riderName}", fontSize = 11.sp, color = DeepGreen, fontWeight = FontWeight.SemiBold)
+                    }
+                } else {
+                    Text("Cold Vault Packaging in Progress", fontSize = 11.sp, color = Color.Gray)
+                }
+
+                TextButton(
+                    onClick = { showLiveMap = !showLiveMap },
+                    contentPadding = PaddingValues(horizontal = 6.dp, vertical = 2.dp)
+                ) {
+                    Icon(Icons.Default.Navigation, contentDescription = null, tint = FreshGreen, modifier = Modifier.size(14.dp))
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(if (showLiveMap) "Hide Map" else "Kung Saan Na? (Map)", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = FreshGreen)
                 }
             }
 
-            Spacer(modifier = Modifier.height(4.dp))
+            if (showLiveMap) {
+                Spacer(modifier = Modifier.height(8.dp))
+                TropiVaultDeliveryMap(
+                    order = order,
+                    isRiderView = false
+                )
+            }
+
+            Spacer(modifier = Modifier.height(6.dp))
 
             Row(
                 modifier = Modifier.fillMaxWidth(),

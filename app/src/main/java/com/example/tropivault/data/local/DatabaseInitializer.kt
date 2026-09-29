@@ -6,18 +6,43 @@ import kotlinx.coroutines.withContext
 object DatabaseInitializer {
 
     suspend fun populateIfNeeded(dao: TropiVaultDao) = withContext(Dispatchers.IO) {
+        // Guarantee admin@store.com with admin123 exists
+        val storeAdmin = dao.getUserByEmail("admin@store.com")
+        if (storeAdmin == null) {
+            dao.insertUser(
+                UserEntity(
+                    email = "admin@store.com",
+                    password = "admin123",
+                    fullName = "Store Administrator",
+                    role = "ADMIN",
+                    phone = "0917-888-STORE",
+                    address = "FarmVault HQ Control Operations, BGC Taguig",
+                    status = "APPROVED"
+                )
+            )
+        }
+
         val existingUsers = dao.getUserByEmail("admin@tropivault.com")
         if (existingUsers != null) return@withContext
 
         // 1. Seed Users
         val users = listOf(
             UserEntity(
+                email = "admin@store.com",
+                password = "admin123",
+                fullName = "Store Administrator",
+                role = "ADMIN",
+                phone = "0917-888-STORE",
+                address = "FarmVault HQ Control Operations, BGC Taguig",
+                status = "APPROVED"
+            ),
+            UserEntity(
                 email = "admin@tropivault.com",
                 password = "password123",
-                fullName = "Maria Santos (TropiVault Admin)",
+                fullName = "Maria Santos (FarmVault Admin)",
                 role = "ADMIN",
                 phone = "0917-888-0001",
-                address = "TropiVault HQ, BGC Innovation Hub, Taguig",
+                address = "FarmVault HQ, BGC Innovation Hub, Taguig",
                 status = "APPROVED"
             ),
             UserEntity(
@@ -351,7 +376,7 @@ object DatabaseInitializer {
             NotificationEntity(
                 userId = 0,
                 targetRole = "ALL",
-                title = "Welcome to TropiVault!",
+                title = "Welcome to FarmVault!",
                 message = "Connecting farmers, clients, and riders with climate-smart food preservation.",
                 type = "GENERAL"
             )

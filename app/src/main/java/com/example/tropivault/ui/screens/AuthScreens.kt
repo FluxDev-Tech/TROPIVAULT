@@ -1,5 +1,6 @@
 package com.example.tropivault.ui.screens
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -17,6 +18,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -24,6 +26,7 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.R
 import com.example.tropivault.ui.Screen
 import com.example.tropivault.ui.TropiVaultViewModel
 import com.example.tropivault.ui.theme.*
@@ -41,6 +44,7 @@ fun LoginScreen(
 
     val authError by viewModel.authError.collectAsStateWithLifecycle()
     val authSuccess by viewModel.authSuccessMessage.collectAsStateWithLifecycle()
+    val authPrompt by viewModel.authPromptMessage.collectAsStateWithLifecycle()
 
     if (showForgotPasswordDialog) {
         var resetEmail by remember { mutableStateOf(email) }
@@ -137,27 +141,26 @@ fun LoginScreen(
             Spacer(modifier = Modifier.height(24.dp))
 
             // Logo & Header
-            Surface(
-                shape = CircleShape,
-                color = ForestGreen,
-                modifier = Modifier.size(64.dp)
-            ) {
-                Box(contentAlignment = Alignment.Center) {
-                    Icon(Icons.Default.Eco, contentDescription = null, tint = GoldenYellow, modifier = Modifier.size(36.dp))
-                }
-            }
+            Image(
+                painter = painterResource(id = R.drawable.farmvault_farm_logo_1790669532613),
+                contentDescription = "FarmVault Logo",
+                modifier = Modifier
+                    .size(88.dp)
+                    .clip(CircleShape)
+            )
 
             Spacer(modifier = Modifier.height(12.dp))
 
             Text(
-                text = "Welcome to TropiVault",
-                style = MaterialTheme.typography.headlineSmall.copy(
-                    fontWeight = FontWeight.ExtraBold,
-                    color = DeepGreen
+                text = "Welcome to FarmVault",
+                style = MaterialTheme.typography.headlineMedium.copy(
+                    fontWeight = FontWeight.Black,
+                    color = DeepGreen,
+                    fontSize = 26.sp
                 )
             )
             Text(
-                text = "Good Fruits. Longer Tomorrows.",
+                text = "Good Harvests. Longer Tomorrows.",
                 style = MaterialTheme.typography.bodySmall.copy(
                     color = Color.Gray,
                     fontSize = 12.sp
@@ -167,6 +170,30 @@ fun LoginScreen(
             Spacer(modifier = Modifier.height(24.dp))
 
             // Messages
+            if (authPrompt != null) {
+                Surface(
+                    shape = RoundedCornerShape(12.dp),
+                    color = GoldenYellow.copy(alpha = 0.2f),
+                    border = androidx.compose.foundation.BorderStroke(1.5.dp, GoldenYellow),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Row(
+                        modifier = Modifier.padding(12.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(Icons.Default.ShoppingCart, contentDescription = null, tint = ForestGreen)
+                        Spacer(modifier = Modifier.width(10.dp))
+                        Text(
+                            text = authPrompt!!,
+                            color = DeepGreen,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 13.sp
+                        )
+                    }
+                }
+                Spacer(modifier = Modifier.height(12.dp))
+            }
+
             if (authError != null) {
                 Surface(
                     shape = RoundedCornerShape(8.dp),
@@ -268,11 +295,17 @@ fun LoginScreen(
             Button(
                 onClick = {
                     viewModel.login(email, password) { loggedInUser ->
-                        when (loggedInUser.role) {
-                            "ADMIN" -> viewModel.navigateTo(Screen.ADMIN_DASHBOARD)
-                            "FARMER" -> viewModel.navigateTo(Screen.FARMER_DASHBOARD)
-                            "RIDER" -> viewModel.navigateTo(Screen.RIDER_DASHBOARD)
-                            else -> viewModel.navigateTo(Screen.CLIENT_DASHBOARD)
+                        val target = viewModel.consumePostLoginDestination()
+                        viewModel.clearAuthPrompt()
+                        if (target != null) {
+                            viewModel.navigateTo(target)
+                        } else {
+                            when (loggedInUser.role) {
+                                "ADMIN" -> viewModel.navigateTo(Screen.ADMIN_DASHBOARD)
+                                "FARMER" -> viewModel.navigateTo(Screen.FARMER_DASHBOARD)
+                                "RIDER" -> viewModel.navigateTo(Screen.RIDER_DASHBOARD)
+                                else -> viewModel.navigateTo(Screen.CLIENT_DASHBOARD)
+                            }
                         }
                     }
                 },
@@ -371,7 +404,7 @@ fun RegisterScreen(
                     Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = ForestGreen)
                 }
                 Text(
-                    text = "Create TropiVault Account",
+                    text = "Create FarmVault Account",
                     style = MaterialTheme.typography.titleMedium.copy(
                         fontWeight = FontWeight.Bold,
                         color = ForestGreen

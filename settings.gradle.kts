@@ -22,6 +22,6 @@ dependencyResolutionManagement {
   }
 }
 
-rootProject.name = "TropiVault"
+rootProject.name = "FarmVault"
 
 include(":app")

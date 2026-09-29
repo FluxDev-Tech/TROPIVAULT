@@ -22,10 +22,34 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.R
 import com.example.tropivault.data.local.ProductEntity
 import com.example.tropivault.data.local.UserEntity
 import com.example.tropivault.ui.Screen
 import com.example.tropivault.ui.theme.*
+
+@Composable
+fun ProduceImage(
+    product: ProductEntity,
+    modifier: Modifier = Modifier,
+    contentScale: ContentScale = ContentScale.Crop
+) {
+    val resId = when {
+        product.imageUrl.contains("banana") || product.name.contains("Banana", ignoreCase = true) -> R.drawable.banana_cavendish_1790639668532
+        product.imageUrl.contains("dragon") || product.imageUrl.contains("pitahaya") || product.name.contains("Pitahaya", ignoreCase = true) || product.name.contains("Mangosteen", ignoreCase = true) -> R.drawable.dragonfruit_pitahaya_1790639685341
+        product.imageUrl.contains("pomelo") || product.imageUrl.contains("citrus") || product.imageUrl.contains("pineapple") || product.name.contains("Pomelo", ignoreCase = true) || product.name.contains("Pineapple", ignoreCase = true) -> R.drawable.pomelo_citrus_1790639699116
+        product.imageUrl.contains("preservation") || product.category.contains("Preserved", ignoreCase = true) -> R.drawable.tropivault_preservation_1790637424122
+        product.imageUrl.contains("mango") || product.name.contains("Mango", ignoreCase = true) -> R.drawable.mango_guimaras_1790639653425
+        else -> R.drawable.tropivault_hero_harvest_1790637412571
+    }
+
+    Image(
+        painter = painterResource(id = resId),
+        contentDescription = product.name,
+        modifier = modifier,
+        contentScale = contentScale
+    )
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -49,52 +73,48 @@ fun TropiVaultTopBar(
         title = {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                Box(
+                Image(
+                    painter = painterResource(id = R.drawable.farmvault_farm_logo_1790669532613),
+                    contentDescription = "FarmVault Logo",
                     modifier = Modifier
-                        .size(36.dp)
+                        .size(42.dp)
                         .clip(CircleShape)
-                        .background(GoldenYellow),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Eco,
-                        contentDescription = "TropiVault Icon",
-                        tint = DeepGreen,
-                        modifier = Modifier.size(22.dp)
-                    )
-                }
+                )
                 Column {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(
-                            text = "TropiVault",
-                            style = MaterialTheme.typography.titleMedium.copy(
-                                fontWeight = FontWeight.Bold,
-                                letterSpacing = 0.5.sp
+                            text = "FarmVault",
+                            style = MaterialTheme.typography.titleLarge.copy(
+                                fontWeight = FontWeight.Black,
+                                fontSize = 21.sp,
+                                letterSpacing = 0.8.sp,
+                                color = GoldenYellow
                             )
                         )
                         Spacer(modifier = Modifier.width(6.dp))
                         Surface(
                             shape = RoundedCornerShape(4.dp),
-                            color = GoldenYellow
+                            color = Color.White
                         ) {
                             Text(
                                 text = "VAULT",
-                                modifier = Modifier.padding(horizontal = 4.dp, vertical = 1.dp),
+                                modifier = Modifier.padding(horizontal = 5.dp, vertical = 1.dp),
                                 style = MaterialTheme.typography.labelSmall.copy(
                                     fontWeight = FontWeight.ExtraBold,
-                                    fontSize = 9.sp,
+                                    fontSize = 10.sp,
                                     color = DeepGreen
                                 )
                             )
                         }
                     }
                     Text(
-                        text = "Good Fruits. Longer Tomorrows.",
+                        text = "Good Harvests. Longer Tomorrows.",
                         style = MaterialTheme.typography.bodySmall.copy(
                             fontSize = 10.sp,
-                            color = Color.White.copy(alpha = 0.85f)
+                            color = Color.White.copy(alpha = 0.95f),
+                            fontWeight = FontWeight.Medium
                         )
                     )
                 }
@@ -310,17 +330,25 @@ fun ProductCard(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(115.dp)
-                    .background(
-                        when (product.category) {
-                            "Mangoes" -> Color(0xFFFEF3C7)
-                            "Bananas & Plantains" -> Color(0xFFFFFBEB)
-                            "Preserved & Dehydrated" -> Color(0xFFFFEDD5)
-                            "Citrus & Melons" -> Color(0xFFECFDF5)
-                            else -> Color(0xFFF0FDF4)
-                        }
-                    )
+                    .height(130.dp)
             ) {
+                ProduceImage(
+                    product = product,
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.Crop
+                )
+
+                // Dark gradient scrim overlay so text is crystal clear
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(
+                            androidx.compose.ui.graphics.Brush.verticalGradient(
+                                colors = listOf(Color.Black.copy(alpha = 0.45f), Color.Transparent, Color.Black.copy(alpha = 0.65f))
+                            )
+                        )
+                )
+
                 // Category icon & shelf life badge
                 Column(
                     modifier = Modifier
@@ -374,53 +402,46 @@ fun ProductCard(
                         }
                     }
 
-                    // Center fruit display
-                    Box(
-                        modifier = Modifier.fillMaxWidth(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        val iconVector = when (product.category) {
-                            "Mangoes" -> Icons.Default.Nature
-                            "Bananas & Plantains" -> Icons.Default.Spa
-                            "Preserved & Dehydrated" -> Icons.Default.DryCleaning
-                            "Citrus & Melons" -> Icons.Default.WaterDrop
-                            "Farm Bundles" -> Icons.Default.Inventory2
-                            else -> Icons.Default.Eco
-                        }
-                        Icon(
-                            imageVector = iconVector,
-                            contentDescription = product.name,
-                            tint = ForestGreen,
-                            modifier = Modifier.size(44.dp)
-                        )
-                    }
-
                     // Storage temperature badge
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text(
-                            text = "Temp: ${product.storageTemp}",
-                            fontSize = 9.sp,
-                            fontWeight = FontWeight.Medium,
-                            color = ForestGreen
-                        )
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(
-                                imageVector = Icons.Default.Star,
-                                contentDescription = "Rating",
-                                tint = TropicalOrange,
-                                modifier = Modifier.size(12.dp)
-                            )
-                            Spacer(modifier = Modifier.width(2.dp))
+                        Surface(
+                            shape = RoundedCornerShape(4.dp),
+                            color = Color.Black.copy(alpha = 0.5f)
+                        ) {
                             Text(
-                                text = "%.1f".format(product.rating),
-                                fontSize = 10.sp,
+                                text = "Temp: ${product.storageTemp}",
+                                modifier = Modifier.padding(horizontal = 5.dp, vertical = 1.dp),
+                                fontSize = 9.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = Color.DarkGray
+                                color = Color.White
                             )
+                        }
+                        Surface(
+                            shape = RoundedCornerShape(4.dp),
+                            color = Color.Black.copy(alpha = 0.5f)
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 5.dp, vertical = 1.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Star,
+                                    contentDescription = "Rating",
+                                    tint = GoldenYellow,
+                                    modifier = Modifier.size(11.dp)
+                                )
+                                Spacer(modifier = Modifier.width(2.dp))
+                                Text(
+                                    text = "%.1f".format(product.rating),
+                                    fontSize = 9.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color.White
+                                )
+                            }
                         }
                     }
                 }

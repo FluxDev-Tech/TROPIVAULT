@@ -44,8 +44,47 @@ fun MarketplaceScreen(
     val filters by viewModel.filters.collectAsStateWithLifecycle()
     val products by viewModel.filteredProducts.collectAsStateWithLifecycle()
     val allApproved by viewModel.approvedProducts.collectAsStateWithLifecycle()
+    val currentUser by viewModel.currentUser.collectAsStateWithLifecycle()
     val featuredProducts = remember(allApproved) {
         allApproved.filter { it.isFeatured }
+    }
+
+    var pendingBuyProduct by remember { mutableStateOf<ProductEntity?>(null) }
+
+    if (pendingBuyProduct != null) {
+        AlertDialog(
+            onDismissRequest = { pendingBuyProduct = null },
+            icon = {
+                Icon(Icons.Default.Lock, contentDescription = null, tint = ForestGreen, modifier = Modifier.size(36.dp))
+            },
+            title = { Text("Login Required to Buy", fontWeight = FontWeight.Bold) },
+            text = {
+                Text(
+                    "You must log in to FarmVault first before purchasing fresh produce. Please log in or register an account.",
+                    fontSize = 13.sp
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        val p = pendingBuyProduct
+                        pendingBuyProduct = null
+                        if (p != null) {
+                            viewModel.addToCart(p, 1)
+                        }
+                        viewModel.requireLoginFor(Screen.CART, "Please log in first to purchase from FarmVault.")
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = ForestGreen)
+                ) {
+                    Text("Log In to Buy", fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { pendingBuyProduct = null }) {
+                    Text("Cancel")
+                }
+            }
+        )
     }
 
     val categories = listOf(
@@ -87,8 +126,8 @@ fun MarketplaceScreen(
                     onValueChange = { viewModel.updateSearchQuery(it) },
                     placeholder = {
                         Text(
-                            "Search Carabao mangoes, farm, location...",
-                            color = Color.White.copy(alpha = 0.7f),
+                            "Search FarmVault produce, farms, harvests...",
+                            color = Color.White.copy(alpha = 0.75f),
                             fontSize = 13.sp
                         )
                     },
@@ -170,7 +209,7 @@ fun MarketplaceScreen(
                             color = GoldenYellow
                         ) {
                             Text(
-                                text = "CLIMATE-CONTROLLED VAULT",
+                                text = "FARMVAULT PRESERVATION",
                                 modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
                                 style = MaterialTheme.typography.labelSmall.copy(
                                     fontWeight = FontWeight.Bold,
@@ -188,7 +227,7 @@ fun MarketplaceScreen(
                             )
                         )
                         Text(
-                            text = "Nitrogen-purged & solar chilled storage direct from Philippine orchards.",
+                            text = "FarmVault nitrogen-purged & solar chilled storage direct from Philippine farms & orchards.",
                             style = MaterialTheme.typography.bodySmall.copy(
                                 color = Color.White.copy(alpha = 0.85f),
                                 fontSize = 11.sp
@@ -440,7 +479,13 @@ fun MarketplaceScreen(
                         ProductCard(
                             product = pair[0],
                             onClick = { viewModel.selectProduct(pair[0]) },
-                            onAddToCart = { viewModel.addToCart(pair[0], 1) }
+                            onAddToCart = {
+                                if (currentUser == null) {
+                                    pendingBuyProduct = pair[0]
+                                } else {
+                                    viewModel.addToCart(pair[0], 1)
+                                }
+                            }
                         )
                     }
                     if (pair.size > 1) {
@@ -448,7 +493,13 @@ fun MarketplaceScreen(
                             ProductCard(
                                 product = pair[1],
                                 onClick = { viewModel.selectProduct(pair[1]) },
-                                onAddToCart = { viewModel.addToCart(pair[1], 1) }
+                                onAddToCart = {
+                                    if (currentUser == null) {
+                                        pendingBuyProduct = pair[1]
+                                    } else {
+                                        viewModel.addToCart(pair[1], 1)
+                                    }
+                                }
                             )
                         }
                     } else {
@@ -482,7 +533,7 @@ fun MarketplaceScreen(
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = "About TropiVault",
+                            text = "About FarmVault",
                             style = MaterialTheme.typography.titleMedium.copy(
                                 fontWeight = FontWeight.Bold,
                                 color = Color.White
@@ -491,7 +542,7 @@ fun MarketplaceScreen(
                     }
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = "TropiVault bridges Filipino fruit growers directly with conscious consumers and businesses. Our solar-assisted cold-chain preserves seasonal harvests, slashing food waste while guaranteeing maximum nutrition.",
+                        text = "FarmVault bridges Filipino and Southeast Asian fruit and crop growers directly with conscious consumers and businesses. Our solar-assisted cold-chain preserves seasonal harvests, slashing food waste while guaranteeing maximum nutrition.",
                         style = MaterialTheme.typography.bodySmall.copy(
                             color = Color.White.copy(alpha = 0.85f),
                             textAlign = androidx.compose.ui.text.style.TextAlign.Center,

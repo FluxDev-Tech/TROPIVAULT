@@ -137,9 +137,9 @@ fun GetStartedPageView(
                 .background(
                     Brush.verticalGradient(
                         colors = listOf(
-                            Color.Transparent,
-                            DarkForest.copy(alpha = 0.65f),
-                            DarkForest.copy(alpha = 0.92f),
+                            DarkForest.copy(alpha = 0.85f),
+                            DarkForest.copy(alpha = 0.90f),
+                            DarkForest.copy(alpha = 0.96f),
                             DarkForest
                         )
                     )
@@ -153,53 +153,81 @@ fun GetStartedPageView(
             verticalArrangement = Arrangement.SpaceBetween,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Top Logo & Header
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier.padding(top = 24.dp)
+            // Top Logo & High-Contrast Brand Badge (Symmetrically Centered & Farm-Themed)
+            Surface(
+                shape = RoundedCornerShape(24.dp),
+                color = ForestGreen.copy(alpha = 0.94f),
+                border = androidx.compose.foundation.BorderStroke(2.dp, GoldenYellow),
+                shadowElevation = 12.dp,
+                modifier = Modifier
+                    .padding(top = 16.dp)
+                    .fillMaxWidth()
             ) {
-                Surface(
-                    shape = CircleShape,
-                    color = ForestGreen,
-                    border = androidx.compose.foundation.BorderStroke(2.dp, GoldenYellow),
-                    modifier = Modifier.size(76.dp)
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier.padding(vertical = 20.dp, horizontal = 16.dp)
                 ) {
-                    Box(contentAlignment = Alignment.Center) {
-                        Icon(
-                            imageVector = Icons.Default.Eco,
-                            contentDescription = "TropiVault Logo",
-                            tint = GoldenYellow,
-                            modifier = Modifier.size(44.dp)
+                    // Perfectly Centered Farm Logo Emblem
+                    Surface(
+                        shape = CircleShape,
+                        color = GoldenYellow,
+                        border = androidx.compose.foundation.BorderStroke(2.5.dp, GoldenYellow),
+                        shadowElevation = 6.dp,
+                        modifier = Modifier.size(108.dp)
+                    ) {
+                        Image(
+                            painter = painterResource(id = R.drawable.farmvault_farm_logo_1790669532613),
+                            contentDescription = "FarmVault Logo",
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .clip(CircleShape),
+                            contentScale = ContentScale.Crop
                         )
                     }
-                }
 
-                Spacer(modifier = Modifier.height(14.dp))
+                    Spacer(modifier = Modifier.height(14.dp))
 
-                Row(verticalAlignment = Alignment.CenterVertically) {
+                    // Perfectly Symmetrical Centered Title
                     Text(
-                        text = "TropiVault",
-                        style = MaterialTheme.typography.headlineMedium.copy(
-                            fontWeight = FontWeight.ExtraBold,
-                            color = Color.White,
-                            letterSpacing = 1.sp
+                        text = "FarmVault",
+                        style = MaterialTheme.typography.headlineLarge.copy(
+                            fontWeight = FontWeight.Black,
+                            color = GoldenYellow,
+                            fontSize = 36.sp,
+                            letterSpacing = 1.2.sp,
+                            textAlign = TextAlign.Center
                         )
                     )
-                    Spacer(modifier = Modifier.width(8.dp))
+
+                    Spacer(modifier = Modifier.height(6.dp))
+
                     Surface(
-                        shape = RoundedCornerShape(6.dp),
+                        shape = RoundedCornerShape(20.dp),
                         color = GoldenYellow
                     ) {
                         Text(
-                            text = "AGRITECH",
-                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                            text = "FARM FRESH & COLD VAULT",
+                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 3.dp),
                             style = MaterialTheme.typography.labelSmall.copy(
-                                fontWeight = FontWeight.Bold,
+                                fontWeight = FontWeight.ExtraBold,
                                 color = DeepGreen,
-                                fontSize = 10.sp
+                                fontSize = 10.sp,
+                                letterSpacing = 1.sp
                             )
                         )
                     }
+
+                    Spacer(modifier = Modifier.height(6.dp))
+
+                    Text(
+                        text = "Connecting Verified Farms Directly to You",
+                        style = MaterialTheme.typography.bodySmall.copy(
+                            color = Color.White.copy(alpha = 0.95f),
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 12.sp,
+                            textAlign = TextAlign.Center
+                        )
+                    )
                 }
             }
 
@@ -236,7 +264,7 @@ fun GetStartedPageView(
                 Spacer(modifier = Modifier.height(14.dp))
 
                 Text(
-                    text = "Good Fruits.\nLonger Tomorrows.",
+                    text = "FarmVault\nGood Harvests. Longer Tomorrows.",
                     style = MaterialTheme.typography.headlineMedium.copy(
                         fontWeight = FontWeight.ExtraBold,
                         color = Color.White,
@@ -248,7 +276,7 @@ fun GetStartedPageView(
                 Spacer(modifier = Modifier.height(10.dp))
 
                 Text(
-                    text = "Discover tropical products, support local farmers, and make every harvest count.",
+                    text = "Discover fresh farm produce, support local growers, and extend freshness up to 3x with FarmVault.",
                     style = MaterialTheme.typography.bodyMedium.copy(
                         color = Color.White.copy(alpha = 0.85f),
                         textAlign = TextAlign.Center,
@@ -460,7 +488,7 @@ fun HowItWorksPageView(
             item {
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = "A Sustainable Tropical Food Revolution",
+                    text = "Welcome to FarmVault",
                     style = MaterialTheme.typography.headlineSmall.copy(
                         fontWeight = FontWeight.Bold,
                         color = DeepGreen
@@ -468,7 +496,7 @@ fun HowItWorksPageView(
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = "Connecting farmers, clients, and riders with climate-controlled storage vaults.",
+                    text = "Connecting farmers, clients, and riders with FarmVault climate-controlled storage vaults.",
                     style = MaterialTheme.typography.bodyMedium.copy(
                         color = Color.DarkGray
                     )
@@ -476,12 +504,12 @@ fun HowItWorksPageView(
                 Spacer(modifier = Modifier.height(6.dp))
             }
 
-            // Feature Card 1: Discover Tropical Products
+            // Feature Card 1: Discover Farm Produce
             item {
                 FeatureCard(
                     number = "1",
-                    title = "Discover Tropical Products",
-                    description = "Browse rare and heirloom tropical fruit varieties preserved at peak sweetness direct from verified orchards.",
+                    title = "Discover Farm Produce",
+                    description = "Browse rare and heirloom fruits and crops preserved at peak sweetness direct from verified farms.",
                     icon = Icons.Default.Search,
                     accentColor = GoldenYellow
                 )

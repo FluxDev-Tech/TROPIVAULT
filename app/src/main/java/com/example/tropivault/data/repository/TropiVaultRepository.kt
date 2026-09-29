@@ -60,7 +60,7 @@ class TropiVaultRepository(
                 userId = userId,
                 targetRole = "ALL",
                 title = "Account Status Updated",
-                message = "Your TropiVault account has been marked as $status.",
+                message = "Your FarmVault account has been marked as $status.",
                 type = "APPROVAL"
             )
         )

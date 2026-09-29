@@ -24,6 +24,7 @@ import com.example.tropivault.data.local.OrderEntity
 import com.example.tropivault.data.local.ProductEntity
 import com.example.tropivault.data.local.UserEntity
 import com.example.tropivault.ui.TropiVaultViewModel
+import com.example.tropivault.ui.components.ProduceImage
 import com.example.tropivault.ui.components.StatusBadge
 import com.example.tropivault.ui.theme.*
 
@@ -43,6 +44,56 @@ fun AdminDashboardScreen(
     var selectedAdminTab by remember { mutableStateOf("OVERVIEW") } // OVERVIEW, APPROVALS, PAYMENTS, DISPATCH, CATALOG, USERS
     var selectedOrderForRiderAssign by remember { mutableStateOf<OrderEntity?>(null) }
     var userSearchQuery by remember { mutableStateOf("") }
+    var showDesktopModal by remember { mutableStateOf(false) }
+
+    if (showDesktopModal) {
+        AlertDialog(
+            onDismissRequest = { showDesktopModal = false },
+            title = {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.Default.Laptop, contentDescription = null, tint = ForestGreen)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Laptop / Desktop Admin Portal", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                }
+            },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Text(
+                        "You can access this Administrator Dashboard separately on any laptop, PC, or desktop web browser:",
+                        fontSize = 12.sp,
+                        color = Color.DarkGray
+                    )
+
+                    Card(
+                        colors = CardDefaults.cardColors(containerColor = LeafMint),
+                        shape = RoundedCornerShape(8.dp)
+                    ) {
+                        Column(modifier = Modifier.padding(10.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                            Text("🌐 Production Web URL:", fontWeight = FontWeight.Bold, fontSize = 11.sp, color = DeepGreen)
+                            Text("https://ais-pre-uqlgzccj5iap2cckqetss2-119534462456.asia-southeast1.run.app", fontSize = 11.sp, color = ForestGreen, fontWeight = FontWeight.Medium)
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text("🔑 Admin Login Credentials:", fontWeight = FontWeight.Bold, fontSize = 11.sp, color = DeepGreen)
+                            Text("Email: admin@store.com", fontSize = 11.sp, color = DeepGreen)
+                            Text("Password: admin123", fontSize = 11.sp, color = DeepGreen)
+                        }
+                    }
+
+                    Text("Desktop Best Practices:", fontWeight = FontWeight.Bold, fontSize = 12.sp, color = DeepGreen)
+                    Text("• Open the URL in Google Chrome, Edge, or Safari on your laptop/desktop.", fontSize = 11.sp, color = Color.Gray)
+                    Text("• Full multi-column view gives you real-time access to approvals, GCash payments, rider dispatching, and catalog moderation.", fontSize = 11.sp, color = Color.Gray)
+                    Text("• Separate the browser tab to a second monitor for live dispatch surveillance.", fontSize = 11.sp, color = Color.Gray)
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = { showDesktopModal = false },
+                    colors = ButtonDefaults.buttonColors(containerColor = ForestGreen)
+                ) {
+                    Text("Got It")
+                }
+            }
+        )
+    }
 
     // Dialog: Assign Rider
     if (selectedOrderForRiderAssign != null) {
@@ -145,7 +196,7 @@ fun AdminDashboardScreen(
                                 Spacer(modifier = Modifier.width(12.dp))
                                 Column {
                                     Text(
-                                        text = "TropiVault Control Center",
+                                        text = "FarmVault Control Center",
                                         style = MaterialTheme.typography.titleMedium.copy(
                                             fontWeight = FontWeight.Bold,
                                             color = Color.White
@@ -159,8 +210,13 @@ fun AdminDashboardScreen(
                                 }
                             }
 
-                            Surface(shape = RoundedCornerShape(6.dp), color = FreshGreen) {
-                                Text("LIVE", modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp), fontSize = 10.sp, color = Color.White, fontWeight = FontWeight.Bold)
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                IconButton(onClick = { showDesktopModal = true }) {
+                                    Icon(Icons.Default.Laptop, contentDescription = "Laptop / Desktop Mode", tint = GoldenYellow)
+                                }
+                                Surface(shape = RoundedCornerShape(6.dp), color = FreshGreen) {
+                                    Text("LIVE", modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp), fontSize = 10.sp, color = Color.White, fontWeight = FontWeight.Bold)
+                                }
                             }
                         }
 
@@ -558,31 +614,54 @@ fun AdminProductModerationRow(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
+            ProduceImage(
+                product = product,
+                modifier = Modifier
+                    .size(54.dp)
+                    .clip(RoundedCornerShape(8.dp))
+            )
+
+            Spacer(modifier = Modifier.width(10.dp))
+
             Column(modifier = Modifier.weight(1f)) {
                 Text(product.name, fontWeight = FontWeight.Bold, fontSize = 13.sp, color = DeepGreen)
                 Text("${product.farmName} • ₱%.0f/%s • %dkg in vault".format(product.price, product.unit, product.stockKg.toInt()), fontSize = 11.sp, color = Color.Gray)
                 Text("Cold Vault: ${product.storageTemp} • ${product.shelfLifeDaysRemaining}d remaining", fontSize = 10.sp, color = FreshGreen)
             }
 
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Surface(
-                    shape = RoundedCornerShape(4.dp),
-                    color = if (product.isApproved) Color(0xFFDCFCE7) else Color(0xFFFEE2E2),
-                    modifier = Modifier.padding(end = 8.dp)
+            Spacer(modifier = Modifier.width(6.dp))
+
+            if (!product.isApproved) {
+                Button(
+                    onClick = onToggleApproval,
+                    colors = ButtonDefaults.buttonColors(containerColor = GoldenYellow),
+                    shape = RoundedCornerShape(8.dp),
+                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp),
+                    modifier = Modifier.height(34.dp)
                 ) {
-                    Text(
-                        text = if (product.isApproved) "ACTIVE" else "DELISTED",
-                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
-                        fontSize = 9.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = if (product.isApproved) Color(0xFF15803D) else Color(0xFFB91C1C)
+                    Text("Approve & Upload", fontSize = 11.sp, color = DeepGreen, fontWeight = FontWeight.Bold)
+                }
+            } else {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Surface(
+                        shape = RoundedCornerShape(4.dp),
+                        color = Color(0xFFDCFCE7),
+                        modifier = Modifier.padding(end = 6.dp)
+                    ) {
+                        Text(
+                            text = "LIVE",
+                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                            fontSize = 9.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF15803D)
+                        )
+                    }
+
+                    Switch(
+                        checked = product.isApproved,
+                        onCheckedChange = { onToggleApproval() }
                     )
                 }
-
-                Switch(
-                    checked = product.isApproved,
-                    onCheckedChange = { onToggleApproval() }
-                )
             }
         }
     }

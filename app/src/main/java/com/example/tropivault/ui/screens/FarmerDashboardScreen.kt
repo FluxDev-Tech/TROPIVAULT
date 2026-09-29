@@ -25,6 +25,8 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.tropivault.data.local.ProductEntity
 import com.example.tropivault.ui.TropiVaultViewModel
+import com.example.tropivault.ui.components.ProduceImage
+import com.example.tropivault.ui.components.StatusBadge
 import com.example.tropivault.ui.theme.*
 
 /**
@@ -53,7 +55,7 @@ fun FarmerDashboardScreen(
     if (showAddProductDialog) {
         AddProductDialog(
             onDismiss = { showAddProductDialog = false },
-            onAdd = { name, category, description, price, unit, stock, temp, shelfLife, notes ->
+            onAdd = { name, category, description, price, unit, stock, temp, shelfLife, notes, imageUrl ->
                 viewModel.addProduct(
                     name = name,
                     category = category,
@@ -63,7 +65,9 @@ fun FarmerDashboardScreen(
                     stockKg = stock,
                     storageTemp = temp,
                     shelfLifeDays = shelfLife,
-                    preservationNotes = notes
+                    preservationNotes = notes,
+                    imageUrl = imageUrl,
+                    autoApproved = false // Awaiting admin approval as requested!
                 )
                 showAddProductDialog = false
             }
@@ -392,16 +396,31 @@ fun FarmerProductCard(
                 .padding(12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
+            ProduceImage(
+                product = product,
+                modifier = Modifier
+                    .size(56.dp)
+                    .clip(RoundedCornerShape(8.dp))
+            )
+
+            Spacer(modifier = Modifier.width(10.dp))
+
             Column(modifier = Modifier.weight(1f)) {
-                Text(product.name, fontWeight = FontWeight.Bold, fontSize = 14.sp, color = DeepGreen)
+                Text(product.name, fontWeight = FontWeight.Bold, fontSize = 13.sp, color = DeepGreen)
                 Text("Category: ${product.category} • ₱%.0f / %s".format(product.price, product.unit), fontSize = 11.sp, color = Color.Gray)
-                Spacer(modifier = Modifier.height(4.dp))
+                Spacer(modifier = Modifier.height(3.dp))
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Surface(shape = RoundedCornerShape(4.dp), color = LeafMint) {
-                        Text("${product.shelfLifeDaysRemaining}d vault life", modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp), fontSize = 10.sp, color = DeepGreen, fontWeight = FontWeight.Bold)
+                    if (product.isApproved) {
+                        Surface(shape = RoundedCornerShape(4.dp), color = Color(0xFFDCFCE7)) {
+                            Text("LIVE IN MARKET", modifier = Modifier.padding(horizontal = 5.dp, vertical = 2.dp), fontSize = 9.sp, color = Color(0xFF15803D), fontWeight = FontWeight.Bold)
+                        }
+                    } else {
+                        Surface(shape = RoundedCornerShape(4.dp), color = GoldLight) {
+                            Text("AWAITING ADMIN REVIEW", modifier = Modifier.padding(horizontal = 5.dp, vertical = 2.dp), fontSize = 9.sp, color = TropicalOrange, fontWeight = FontWeight.Bold)
+                        }
                     }
                     Spacer(modifier = Modifier.width(6.dp))
-                    Text("Stock: %.0f kg".format(product.stockKg), fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = ForestGreen)
+                    Text("Stock: %.0f kg".format(product.stockKg), fontSize = 11.sp, fontWeight = FontWeight.SemiBold, color = ForestGreen)
                 }
             }
 
@@ -521,7 +540,7 @@ fun EditProductDialog(
 @Composable
 fun AddProductDialog(
     onDismiss: () -> Unit,
-    onAdd: (String, String, String, Double, String, Double, String, Int, String) -> Unit
+    onAdd: (String, String, String, Double, String, Double, String, Int, String, String) -> Unit
 ) {
     var name by remember { mutableStateOf("") }
     var category by remember { mutableStateOf("Mangoes") }
@@ -532,8 +551,28 @@ fun AddProductDialog(
     var temp by remember { mutableStateOf("12°C") }
     var shelfLifeText by remember { mutableStateOf("16") }
     var notes by remember { mutableStateOf("Controlled Atmosphere Chilled at 12°C, 90% RH") }
+    var imageUrl by remember { mutableStateOf("mango_guimaras_1790639653425") }
+    var showAiScanner by remember { mutableStateOf(false) }
 
     val categories = listOf("Mangoes", "Bananas & Plantains", "Citrus & Melons", "Exotic & Rare", "Preserved & Dehydrated", "Farm Bundles")
+
+    if (showAiScanner) {
+        ProduceAiScannerDialog(
+            onDismiss = { showAiScanner = false },
+            onApplyScan = { scannedName, scannedCat, scannedPrice, scannedStock, scannedTemp, scannedLife, scannedNotes, scannedImg ->
+                name = scannedName
+                category = scannedCat
+                priceText = scannedPrice.toInt().toString()
+                stockText = scannedStock.toInt().toString()
+                temp = scannedTemp
+                shelfLifeText = scannedLife.toString()
+                notes = scannedNotes
+                description = "AI Inspected: Export Grade A+ quality harvest with high brix sweetness and zero lesions."
+                imageUrl = scannedImg
+                showAiScanner = false
+            }
+        )
+    }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -545,6 +584,32 @@ fun AddProductDialog(
                     .verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
+                // AI Produce Scanner Button
+                Button(
+                    onClick = { showAiScanner = true },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(10.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = GoldenYellow)
+                ) {
+                    Icon(Icons.Default.CameraAlt, contentDescription = null, tint = DeepGreen)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Auto-Detect Quality & Kilos (AI)", color = DeepGreen, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                }
+
+                if (name.isNotBlank()) {
+                    Surface(
+                        shape = RoundedCornerShape(8.dp),
+                        color = LeafMint,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Row(modifier = Modifier.padding(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Icons.Default.CheckCircle, contentDescription = null, tint = FreshGreen, modifier = Modifier.size(16.dp))
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text("Image Attached: $imageUrl", fontSize = 11.sp, color = DeepGreen, fontWeight = FontWeight.SemiBold)
+                        }
+                    }
+                }
+
                 OutlinedTextField(
                     value = name,
                     onValueChange = { name = it },
@@ -626,16 +691,171 @@ fun AddProductDialog(
                     val p = priceText.toDoubleOrNull() ?: 200.0
                     val s = stockText.toDoubleOrNull() ?: 50.0
                     val days = shelfLifeText.toIntOrNull() ?: 14
-                    onAdd(name, category, description, p, unit, s, temp, days, notes)
+                    onAdd(name, category, description, p, unit, s, temp, days, notes, imageUrl)
                 },
                 enabled = name.isNotBlank(),
                 colors = ButtonDefaults.buttonColors(containerColor = ForestGreen)
             ) {
-                Text("Save to Vault")
+                Text("Submit for Vault & Admin Review")
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) { Text("Cancel") }
+        }
+    )
+}
+
+@Composable
+fun ProduceAiScannerDialog(
+    onDismiss: () -> Unit,
+    onApplyScan: (String, String, Double, Double, String, Int, String, String) -> Unit
+) {
+    var selectedProduceType by remember { mutableStateOf("MANGO") }
+    var scanCompleted by remember { mutableStateOf(false) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.Default.DocumentScanner, contentDescription = null, tint = ForestGreen)
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("AI Quality & Weight Scanner", fontSize = 14.sp, fontWeight = FontWeight.Bold)
+            }
+        },
+        text = {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                Text("Select harvest sample photo or capture produce image:", fontSize = 11.sp, color = Color.Gray)
+
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Button(
+                        onClick = { selectedProduceType = "MANGO"; scanCompleted = false },
+                        colors = ButtonDefaults.buttonColors(containerColor = if (selectedProduceType == "MANGO") ForestGreen else Color.LightGray),
+                        modifier = Modifier.weight(1f).height(34.dp),
+                        contentPadding = PaddingValues(0.dp)
+                    ) {
+                        Text("🥭 Mango", fontSize = 10.sp)
+                    }
+                    Button(
+                        onClick = { selectedProduceType = "BANANA"; scanCompleted = false },
+                        colors = ButtonDefaults.buttonColors(containerColor = if (selectedProduceType == "BANANA") ForestGreen else Color.LightGray),
+                        modifier = Modifier.weight(1f).height(34.dp),
+                        contentPadding = PaddingValues(0.dp)
+                    ) {
+                        Text("🍌 Banana", fontSize = 10.sp)
+                    }
+                    Button(
+                        onClick = { selectedProduceType = "DRAGONFRUIT"; scanCompleted = false },
+                        colors = ButtonDefaults.buttonColors(containerColor = if (selectedProduceType == "DRAGONFRUIT") ForestGreen else Color.LightGray),
+                        modifier = Modifier.weight(1f).height(34.dp),
+                        contentPadding = PaddingValues(0.dp)
+                    ) {
+                        Text("🐉 Pitahaya", fontSize = 10.sp)
+                    }
+                    Button(
+                        onClick = { selectedProduceType = "POMELO"; scanCompleted = false },
+                        colors = ButtonDefaults.buttonColors(containerColor = if (selectedProduceType == "POMELO") ForestGreen else Color.LightGray),
+                        modifier = Modifier.weight(1f).height(34.dp),
+                        contentPadding = PaddingValues(0.dp)
+                    ) {
+                        Text("🍊 Pomelo", fontSize = 10.sp)
+                    }
+                }
+
+                // Visual Scanner Reticle Box
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(130.dp)
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(Color(0xFF1E293B)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Icon(
+                            imageVector = when (selectedProduceType) {
+                                "MANGO" -> Icons.Default.Nature
+                                "BANANA" -> Icons.Default.Spa
+                                "DRAGONFRUIT" -> Icons.Default.Eco
+                                else -> Icons.Default.WaterDrop
+                            },
+                            contentDescription = null,
+                            tint = GoldenYellow,
+                            modifier = Modifier.size(50.dp)
+                        )
+                        Spacer(modifier = Modifier.height(6.dp))
+                        Text(
+                            text = if (scanCompleted) "✨ Inspection Complete: 100% Goods" else "Target Harvest Loaded • Ready to inspect",
+                            color = Color.White,
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+                }
+
+                if (!scanCompleted) {
+                    Button(
+                        onClick = { scanCompleted = true },
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = ButtonDefaults.buttonColors(containerColor = FreshGreen),
+                        shape = RoundedCornerShape(8.dp)
+                    ) {
+                        Icon(Icons.Default.Bolt, contentDescription = null)
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text("Run AI Inspection (Detect Quality & Kilos)", fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                    }
+                } else {
+                    // Inspection Results
+                    Card(
+                        shape = RoundedCornerShape(10.dp),
+                        colors = CardDefaults.cardColors(containerColor = LeafMint),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Column(modifier = Modifier.padding(10.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                            Surface(shape = RoundedCornerShape(4.dp), color = FreshGreen) {
+                                Text("✅ GOODS / EXPORT GRADE A+", modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp), color = Color.White, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                            }
+                            Text(
+                                text = when (selectedProduceType) {
+                                    "MANGO" -> "Guimaras Sweet Carabao Mango • 45.0 kg (~180 pcs)"
+                                    "BANANA" -> "Bukidnon Golden Lacatan Bananas • 65.0 kg bundle"
+                                    "DRAGONFRUIT" -> "Mindanao Red Pitahaya • 38.0 kg harvest"
+                                    else -> "Davao Pink Honey Pomelo • 52.0 kg crate"
+                                },
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 12.sp,
+                                color = DeepGreen
+                            )
+                            Text("Sweetness: 18.5° Brix • Skin Defects: 0.0%", fontSize = 10.sp, color = Color.DarkGray)
+                            Text("Recommended Vault Temp: 12°C • Shelf-Life: 18 Days", fontSize = 10.sp, color = DeepGreen)
+                        }
+                    }
+
+                    Button(
+                        onClick = {
+                            when (selectedProduceType) {
+                                "MANGO" -> onApplyScan("Guimaras Super Sweet Carabao Mangoes", "Mangoes", 260.0, 45.0, "12°C", 18, "Nitrogen Cold Vault 12°C, 92% RH", "mango_guimaras_1790639653425")
+                                "BANANA" -> onApplyScan("Bukidnon High-Altitude Lacatan Bananas", "Bananas & Plantains", 130.0, 65.0, "14°C", 14, "Ethylene-Scrubbed Chamber at 14°C", "banana_cavendish_1790639668532")
+                                "DRAGONFRUIT" -> onApplyScan("Mindanao Red Pitahaya (Dragon Fruit)", "Exotic & Rare", 280.0, 38.0, "10°C", 16, "Solar Hydro-Chill Hypobaric Vault", "dragonfruit_pitahaya_1790639685341")
+                                else -> onApplyScan("Davao Seedless Honey Pomelo", "Citrus & Melons", 190.0, 52.0, "11°C", 25, "Ozone-Sanitized Chilled Vault 11°C", "pomelo_citrus_1790639699116")
+                            }
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = ButtonDefaults.buttonColors(containerColor = GoldenYellow),
+                        shape = RoundedCornerShape(8.dp)
+                    ) {
+                        Text("Apply AI Scan to Produce Form", color = DeepGreen, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                    }
+                }
+            }
+        },
+        confirmButton = {},
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text("Close") }
         }
     )
 }

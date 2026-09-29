@@ -33,6 +33,7 @@ fun CartScreen(
 ) {
     val items by viewModel.cartItems.collectAsStateWithLifecycle()
     val subtotal by viewModel.cartSubtotal.collectAsStateWithLifecycle()
+    val currentUser by viewModel.currentUser.collectAsStateWithLifecycle()
 
     Scaffold(
         containerColor = TropiCream,
@@ -64,7 +65,13 @@ fun CartScreen(
                             }
 
                             Button(
-                                onClick = { viewModel.navigateTo(Screen.CHECKOUT) },
+                                onClick = {
+                                    if (currentUser == null) {
+                                        viewModel.requireLoginFor(Screen.CHECKOUT, "Please log in first to checkout your FarmVault produce.")
+                                    } else {
+                                        viewModel.navigateTo(Screen.CHECKOUT)
+                                    }
+                                },
                                 shape = RoundedCornerShape(12.dp),
                                 colors = ButtonDefaults.buttonColors(containerColor = ForestGreen),
                                 modifier = Modifier
@@ -105,7 +112,7 @@ fun CartScreen(
                     }
                     Spacer(modifier = Modifier.height(16.dp))
                     Text(
-                        text = "Your TropiVault Cart is Empty",
+                        text = "Your FarmVault Cart is Empty",
                         style = MaterialTheme.typography.titleMedium.copy(
                             fontWeight = FontWeight.Bold,
                             color = DeepGreen
@@ -298,9 +305,9 @@ fun CheckoutScreen(
     val subtotal by viewModel.cartSubtotal.collectAsStateWithLifecycle()
 
     var fulfillmentType by remember { mutableStateOf("DELIVERY") }
-    var customerName by remember(user) { mutableStateOf(user?.fullName ?: "Sofia Dela Cruz") }
-    var customerPhone by remember(user) { mutableStateOf(user?.phone ?: "0917-999-2345") }
-    var deliveryAddress by remember(user) { mutableStateOf(user?.address ?: "Unit 14C, Bellagio Tower 2, BGC, Taguig City") }
+    var customerName by remember(user) { mutableStateOf(user?.fullName ?: "") }
+    var customerPhone by remember(user) { mutableStateOf(user?.phone ?: "") }
+    var deliveryAddress by remember(user) { mutableStateOf(user?.address ?: "") }
     var selectedPickupDepot by remember { mutableStateOf("BGC Cold Storage Hub (Open 8am-8pm)") }
 
     var paymentMethod by remember { mutableStateOf("GCASH") }
@@ -427,30 +434,47 @@ fun CheckoutScreen(
                             )
                         }
 
-                        Button(
-                            onClick = {
-                                viewModel.placeOrder(
-                                    customerName = customerName,
-                                    customerPhone = customerPhone,
-                                    fulfillmentType = fulfillmentType,
-                                    deliveryAddress = deliveryAddress,
-                                    pickupDepot = selectedPickupDepot,
-                                    paymentMethod = paymentMethod,
-                                    paymentReference = if (paymentReference.isNotBlank()) paymentReference else "REF-${System.currentTimeMillis() % 100000}",
-                                    deliveryFee = deliveryFee,
-                                    onSuccess = { orderId ->
-                                        orderSuccessDialogOrderId = orderId
-                                    }
-                                )
-                            },
-                            enabled = customerName.isNotBlank() && customerPhone.isNotBlank(),
-                            shape = RoundedCornerShape(12.dp),
-                            colors = ButtonDefaults.buttonColors(containerColor = FreshGreen),
-                            modifier = Modifier
-                                .height(50.dp)
-                                .testTag("checkout_place_order_button")
-                        ) {
-                            Text("Confirm & Place Order", fontWeight = FontWeight.Bold, fontSize = 15.sp)
+                        if (user == null) {
+                            Button(
+                                onClick = {
+                                    viewModel.requireLoginFor(Screen.CHECKOUT, "Please log in first to complete your FarmVault order.")
+                                },
+                                shape = RoundedCornerShape(12.dp),
+                                colors = ButtonDefaults.buttonColors(containerColor = GoldenYellow, contentColor = DeepGreen),
+                                modifier = Modifier
+                                    .height(50.dp)
+                                    .testTag("checkout_login_to_place_order")
+                            ) {
+                                Icon(Icons.Default.Lock, contentDescription = null, modifier = Modifier.size(18.dp))
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text("Log In to Place Order", fontWeight = FontWeight.Bold, fontSize = 15.sp)
+                            }
+                        } else {
+                            Button(
+                                onClick = {
+                                    viewModel.placeOrder(
+                                        customerName = customerName,
+                                        customerPhone = customerPhone,
+                                        fulfillmentType = fulfillmentType,
+                                        deliveryAddress = deliveryAddress,
+                                        pickupDepot = selectedPickupDepot,
+                                        paymentMethod = paymentMethod,
+                                        paymentReference = if (paymentReference.isNotBlank()) paymentReference else "REF-${System.currentTimeMillis() % 100000}",
+                                        deliveryFee = deliveryFee,
+                                        onSuccess = { orderId ->
+                                            orderSuccessDialogOrderId = orderId
+                                        }
+                                    )
+                                },
+                                enabled = customerName.isNotBlank() && customerPhone.isNotBlank(),
+                                shape = RoundedCornerShape(12.dp),
+                                colors = ButtonDefaults.buttonColors(containerColor = FreshGreen),
+                                modifier = Modifier
+                                    .height(50.dp)
+                                    .testTag("checkout_place_order_button")
+                            ) {
+                                Text("Confirm & Place Order", fontWeight = FontWeight.Bold, fontSize = 15.sp)
+                            }
                         }
                     }
                 }
@@ -466,6 +490,40 @@ fun CheckoutScreen(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Spacer(modifier = Modifier.height(4.dp))
+
+            // Login Requirement Notice if guest
+            if (user == null) {
+                Surface(
+                    shape = RoundedCornerShape(12.dp),
+                    color = GoldenYellow.copy(alpha = 0.2f),
+                    border = androidx.compose.foundation.BorderStroke(1.5.dp, GoldenYellow),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Row(
+                        modifier = Modifier.padding(14.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
+                            Icon(Icons.Default.Lock, contentDescription = null, tint = ForestGreen)
+                            Spacer(modifier = Modifier.width(10.dp))
+                            Column {
+                                Text("Login Required to Buy", fontWeight = FontWeight.Bold, color = DeepGreen, fontSize = 14.sp)
+                                Text("Please log in or register before confirming your order.", color = Color.DarkGray, fontSize = 12.sp)
+                            }
+                        }
+                        Button(
+                            onClick = {
+                                viewModel.requireLoginFor(Screen.CHECKOUT, "Please log in first to purchase from FarmVault.")
+                            },
+                            colors = ButtonDefaults.buttonColors(containerColor = ForestGreen),
+                            shape = RoundedCornerShape(8.dp)
+                        ) {
+                            Text("Log In", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                        }
+                    }
+                }
+            }
 
             // 1. Fulfillment Type Selector
             Card(

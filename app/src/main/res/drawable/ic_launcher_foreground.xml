@@ -3,6 +3,6 @@
     <item
         android:width="66dp"
         android:height="66dp"
-        android:drawable="@drawable/tropivault_icon_1790637372989"
+        android:drawable="@drawable/farmvault_farm_logo_1790669532613"
         android:gravity="center" />
 </layer-list>

@@ -23,6 +23,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.tropivault.data.local.OrderEntity
 import com.example.tropivault.ui.TropiVaultViewModel
 import com.example.tropivault.ui.components.StatusBadge
+import com.example.tropivault.ui.components.TropiVaultDeliveryMap
 import com.example.tropivault.ui.theme.*
 
 /**
@@ -444,21 +445,40 @@ fun ActiveRiderOrderCard(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(Icons.Default.Phone, contentDescription = "Phone", tint = ForestGreen, modifier = Modifier.size(14.dp))
-                Spacer(modifier = Modifier.width(4.dp))
-                Text(order.customerPhone, fontSize = 12.sp, color = ForestGreen, fontWeight = FontWeight.Medium)
+            // Pickup & Drop-off details
+            Card(
+                shape = RoundedCornerShape(10.dp),
+                colors = CardDefaults.cardColors(containerColor = LeafMint),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(modifier = Modifier.padding(10.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Surface(shape = RoundedCornerShape(4.dp), color = ForestGreen) {
+                            Text("PICKUP", modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp), color = GoldenYellow, fontSize = 9.sp, fontWeight = FontWeight.Bold)
+                        }
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text("Farm Cold Vault Gate 2 (Produce Depot Hub)", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = DeepGreen)
+                    }
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Surface(shape = RoundedCornerShape(4.dp), color = Color(0xFFDC2626)) {
+                            Text("DROP-OFF", modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp), color = Color.White, fontSize = 9.sp, fontWeight = FontWeight.Bold)
+                        }
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text("${order.customerName} • ${order.deliveryAddress}", fontSize = 11.sp, color = DeepGreen)
+                    }
+                }
             }
 
-            Spacer(modifier = Modifier.height(4.dp))
+            Spacer(modifier = Modifier.height(10.dp))
 
-            Row(verticalAlignment = Alignment.Top) {
-                Icon(Icons.Default.LocationOn, contentDescription = "Address", tint = Color.Gray, modifier = Modifier.size(14.dp))
-                Spacer(modifier = Modifier.width(4.dp))
-                Text(order.deliveryAddress, fontSize = 11.sp, color = Color.Gray)
-            }
+            // Interactive Live Navigation Map
+            TropiVaultDeliveryMap(
+                order = order,
+                isRiderView = true,
+                onStatusUpdate = onUpdateStatus
+            )
 
-            Spacer(modifier = Modifier.height(6.dp))
+            Spacer(modifier = Modifier.height(10.dp))
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -480,27 +500,13 @@ fun ActiveRiderOrderCard(
                 Text("Trip Fee: +₱75.00", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = ForestGreen)
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(10.dp))
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.End,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                if (order.orderStatus != "IN_TRANSIT") {
-                    Button(
-                        onClick = { onUpdateStatus("IN_TRANSIT") },
-                        colors = ButtonDefaults.buttonColors(containerColor = TropicalOrange),
-                        shape = RoundedCornerShape(8.dp),
-                        modifier = Modifier.height(36.dp)
-                    ) {
-                        Icon(Icons.Default.TwoWheeler, contentDescription = null, modifier = Modifier.size(16.dp))
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text("Start Transit", fontSize = 12.sp, fontWeight = FontWeight.Bold)
-                    }
-                    Spacer(modifier = Modifier.width(8.dp))
-                }
-
                 Button(
                     onClick = onCompletePOD,
                     colors = ButtonDefaults.buttonColors(containerColor = FreshGreen),
@@ -509,7 +515,7 @@ fun ActiveRiderOrderCard(
                 ) {
                     Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(16.dp))
                     Spacer(modifier = Modifier.width(6.dp))
-                    Text("Deliver & POD", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                    Text("Complete POD", fontSize = 12.sp, fontWeight = FontWeight.Bold)
                 }
             }
         }

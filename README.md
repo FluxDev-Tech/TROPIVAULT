@@ -1,5 +1,5 @@
-# 🥭 TropiVault
-> **Good Fruits. Longer Tomorrows.**  
+# 🌾 FarmVault
+> **Good Harvests. Longer Tomorrows.**  
 > *Tropical Agriculture Marketplace & Climate-Controlled Food Preservation Management System*
 
 [![Platform](https://img.shields.io/badge/Platform-Android%20%7C%20Jetpack%20Compose-075B45?style=flat-square&logo=android)](https://developer.android.com/jetpack/compose)
@@ -11,7 +11,7 @@
 
 ## 📖 Overview
 
-**TropiVault** directly bridges Filipino and Southeast Asian fruit growers with households, culinary businesses, and markets. By integrating solar-powered, climate-controlled cold storage vaults with real-time crop telemetry and transparent logistics, TropiVault slows natural fruit respiration, dramatically cuts post-harvest food waste, guarantees fair farmgate prices, and extends produce shelf-life by up to 3x.
+**FarmVault** directly bridges Filipino and Southeast Asian fruit and crop growers with households, culinary businesses, and markets. By integrating solar-powered, climate-controlled cold storage vaults with real-time crop telemetry and transparent logistics, FarmVault slows natural fruit respiration, dramatically cuts post-harvest food waste, guarantees fair farmgate prices, and extends produce shelf-life by up to 3x.
 
 ---
 
@@ -19,7 +19,7 @@
 
 ```
  ┌──────────────────────────────────────────────────────────────────────────┐
- │                                TROPIVAULT                                │
+ │                                FARMVAULT                                 │
  └──────────────────────────────────────────────────────────────────────────┘
          │
          ├── 1. Onboarding PageView (Get Started ──► How It Works ──► Public Market)
@@ -95,8 +95,35 @@ TropiVault provides four completely independent, specialized operational dashboa
   - **Approvals**: Review partner applications for Farmers and Riders; 1-tap Approve & Activate or Reject.
   - **Payments**: Real-time verification of GCash references and bank deposit slips, transitioning payments from `PENDING_VERIFICATION` to `PAID`.
   - **Dispatch**: Assign and reassign verified drivers to unassigned customer deliveries.
-  - **Catalog Moderation**: Toggle active or delisted status for any crop in the marketplace.
+  - **Catalog Moderation**: Toggle active or delisted status for any crop in the marketplace. When farmers upload harvest photos via the AI scanner, admin can approve them with 1 tap to auto-publish them directly to the marketplace with the farmer's uploaded image.
   - **User Management**: Search and inspect all registered clients, farmers, riders, and administrators; suspend or activate accounts.
+
+---
+
+## 🖥️ How to Use the Admin Dashboard Separately on a Laptop or Desktop
+
+You can run and monitor the Administrator Dashboard separately on a laptop, desktop PC, or tablet while riders and clients use their mobile devices:
+
+### Method 1: Web Browser Access (Direct Cloud Instance)
+1. On your laptop or desktop computer, open any web browser (Google Chrome, Microsoft Edge, Safari, or Mozilla Firefox).
+2. Navigate to the deployed live application URL:
+   ```
+   https://ais-pre-uqlgzccj5iap2cckqetss2-119534462456.asia-southeast1.run.app
+   ```
+3. Click **Log In** and enter the dedicated admin credentials:
+   - **Email:** `admin@store.com`
+   - **Password:** `admin123`
+4. The system will open directly into the **TropiVault Control Center**:
+   - The desktop-wide viewport displays platform metrics, partner KYC verifications, GCash payment reference verifications, live rider dispatch, and produce moderation simultaneously.
+   - You can leave this browser window open on a second monitor as a live operations command center.
+
+### Method 2: Local VS Code Desktop Development Setup
+1. If you are developing locally on your laptop, launch the project in VS Code:
+   ```bash
+   code /path/to/tropivault
+   ```
+2. Run the application on an Android Emulator configured with tablet or desktop screen dimensions (e.g. 1920x1080 resolution).
+3. Log in with `admin@store.com` / `admin123`. The responsive Compose layout automatically scales to take full advantage of wide screens.
 
 ---
 

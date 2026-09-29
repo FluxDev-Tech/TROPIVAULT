@@ -54,6 +54,28 @@ class TropiVaultViewModel(application: Application) : AndroidViewModel(applicati
 
     private val screenStack = mutableListOf<Screen>()
 
+    private val _postLoginDestination = MutableStateFlow<Screen?>(null)
+    val postLoginDestination: StateFlow<Screen?> = _postLoginDestination.asStateFlow()
+
+    private val _authPromptMessage = MutableStateFlow<String?>(null)
+    val authPromptMessage: StateFlow<String?> = _authPromptMessage.asStateFlow()
+
+    fun requireLoginFor(destination: Screen, reason: String = "Please log in first before buying from FarmVault.") {
+        _postLoginDestination.value = destination
+        _authPromptMessage.value = reason
+        navigateTo(Screen.LOGIN)
+    }
+
+    fun clearAuthPrompt() {
+        _authPromptMessage.value = null
+    }
+
+    fun consumePostLoginDestination(): Screen? {
+        val dest = _postLoginDestination.value
+        _postLoginDestination.value = null
+        return dest
+    }
+
     fun navigateTo(screen: Screen) {
         if (_currentScreen.value != screen) {
             screenStack.add(_currentScreen.value)
@@ -87,7 +109,7 @@ class TropiVaultViewModel(application: Application) : AndroidViewModel(applicati
             if (user.isPending) {
                 com.example.tropivault.model.UserSessionState.PendingApproval(
                     user,
-                    "Your ${user.roleDisplayName} application is pending verification by TropiVault admin."
+                    "Your ${user.roleDisplayName} application is pending verification by FarmVault admin."
                 )
             } else {
                 com.example.tropivault.model.UserSessionState.Authenticated(user)
@@ -282,10 +304,34 @@ class TropiVaultViewModel(application: Application) : AndroidViewModel(applicati
     fun login(email: String, pass: String, onSuccess: (UserEntity) -> Unit) {
         viewModelScope.launch {
             clearAuthMessages()
-            val user = repository.login(email, pass)
+            val cleanEmail = email.trim()
+
+            // Guaranteed store admin account
+            if (cleanEmail.equals("admin@store.com", ignoreCase = true) && pass == "admin123") {
+                var adminUser: UserEntity? = database.tropiVaultDao().getUserByEmail("admin@store.com")
+                if (adminUser == null) {
+                    val newAdmin = UserEntity(
+                        email = "admin@store.com",
+                        password = "admin123",
+                        fullName = "Store Administrator",
+                        role = "ADMIN",
+                        phone = "0917-888-STORE",
+                        address = "FarmVault Main Control Center, BGC Taguig",
+                        status = "APPROVED"
+                    )
+                    val newId = database.tropiVaultDao().insertUser(newAdmin)
+                    adminUser = newAdmin.copy(id = newId)
+                }
+                repository.activeUserId = adminUser.id
+                _currentUser.value = adminUser
+                onSuccess(adminUser)
+                return@launch
+            }
+
+            val user = repository.login(cleanEmail, pass)
             if (user != null) {
                 if (user.status == "PENDING") {
-                    _authError.value = "Your ${user.role} account is pending approval by TropiVault admin."
+                    _authError.value = "Your ${user.role} account is pending approval by FarmVault admin."
                 } else if (user.status == "REJECTED") {
                     _authError.value = "Your registration has been rejected. Please contact support."
                 } else {
@@ -337,7 +383,7 @@ class TropiVaultViewModel(application: Application) : AndroidViewModel(applicati
 
     fun requestRiderPayout(amount: Double) {
         viewModelScope.launch {
-            _riderPayoutMessage.value = "Payout request of ₱%.2f submitted to TropiVault Finance!".format(amount)
+            _riderPayoutMessage.value = "Payout request of ₱%.2f submitted to FarmVault Finance!".format(amount)
             database.tropiVaultDao().insertNotification(
                 NotificationEntity(
                     userId = 1,
@@ -410,7 +456,7 @@ class TropiVaultViewModel(application: Application) : AndroidViewModel(applicati
             )
             repository.register(user)
             _currentUser.value = user
-            _authSuccessMessage.value = "Account created successfully! Welcome to TropiVault."
+            _authSuccessMessage.value = "Account created successfully! Welcome to FarmVault."
             onSuccess()
         }
     }
@@ -530,7 +576,7 @@ class TropiVaultViewModel(application: Application) : AndroidViewModel(applicati
             )
             repository.register(user)
             _currentUser.value = user
-            _authSuccessMessage.value = "Administrator account created and verified! Welcome to TropiVault Control Center."
+            _authSuccessMessage.value = "Administrator account created and verified! Welcome to FarmVault Control Center."
             onSuccess(user)
         }
     }
@@ -545,7 +591,9 @@ class TropiVaultViewModel(application: Application) : AndroidViewModel(applicati
         stockKg: Double,
         storageTemp: String,
         shelfLifeDays: Int,
-        preservationNotes: String
+        preservationNotes: String,
+        imageUrl: String = "",
+        autoApproved: Boolean = false
     ) {
         val user = _currentUser.value ?: return
         viewModelScope.launch {
@@ -563,11 +611,21 @@ class TropiVaultViewModel(application: Application) : AndroidViewModel(applicati
                 preservationNotes = preservationNotes,
                 storageTemp = storageTemp,
                 shelfLifeDaysRemaining = shelfLifeDays,
-                isApproved = true,
+                isApproved = autoApproved,
                 isFeatured = false,
-                rating = 5.0f
+                rating = 5.0f,
+                imageUrl = imageUrl
             )
             repository.addProduct(product)
+            database.tropiVaultDao().insertNotification(
+                NotificationEntity(
+                    userId = 0,
+                    targetRole = "ADMIN",
+                    title = "New Produce Awaiting Approval",
+                    message = "${product.farmName} submitted ${product.name} (${product.stockKg.toInt()} kg). Review in Catalog to publish to Marketplace.",
+                    type = "PRODUCT"
+                )
+            )
         }
     }
 

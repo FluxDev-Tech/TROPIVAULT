@@ -19,8 +19,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.ui.layout.ContentScale
 import com.example.tropivault.ui.Screen
 import com.example.tropivault.ui.TropiVaultViewModel
+import com.example.tropivault.ui.components.ProduceImage
 import com.example.tropivault.ui.theme.*
 
 @Composable
@@ -28,8 +30,10 @@ fun ProductDetailScreen(
     viewModel: TropiVaultViewModel
 ) {
     val product by viewModel.selectedProduct.collectAsStateWithLifecycle()
+    val currentUser by viewModel.currentUser.collectAsStateWithLifecycle()
     var quantity by remember { mutableStateOf(1) }
     var showAddedSnackbar by remember { mutableStateOf(false) }
+    var showLoginRequiredDialog by remember { mutableStateOf(false) }
 
     if (product == null) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -39,6 +43,46 @@ fun ProductDetailScreen(
     }
 
     val prod = product!!
+
+    if (showLoginRequiredDialog) {
+        AlertDialog(
+            onDismissRequest = { showLoginRequiredDialog = false },
+            icon = {
+                Icon(
+                    imageVector = Icons.Default.Lock,
+                    contentDescription = null,
+                    tint = ForestGreen,
+                    modifier = Modifier.size(36.dp)
+                )
+            },
+            title = {
+                Text("Login Required to Buy", fontWeight = FontWeight.Bold)
+            },
+            text = {
+                Text(
+                    "You must log in to your FarmVault account first before buying fresh produce. Please log in or create an account to proceed.",
+                    fontSize = 13.sp
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showLoginRequiredDialog = false
+                        viewModel.addToCart(prod, quantity)
+                        viewModel.requireLoginFor(Screen.CHECKOUT, "Please log in first to complete your purchase of ${prod.name}.")
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = ForestGreen)
+                ) {
+                    Text("Log In to Buy", fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showLoginRequiredDialog = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
 
     Scaffold(
         containerColor = TropiCream,
@@ -84,8 +128,12 @@ fun ProductDetailScreen(
                     // Add to Cart
                     OutlinedButton(
                         onClick = {
-                            viewModel.addToCart(prod, quantity)
-                            showAddedSnackbar = true
+                            if (currentUser == null) {
+                                showLoginRequiredDialog = true
+                            } else {
+                                viewModel.addToCart(prod, quantity)
+                                showAddedSnackbar = true
+                            }
                         },
                         modifier = Modifier
                             .weight(1f)
@@ -102,8 +150,12 @@ fun ProductDetailScreen(
                     // Buy Now
                     Button(
                         onClick = {
-                            viewModel.addToCart(prod, quantity)
-                            viewModel.navigateTo(Screen.CHECKOUT)
+                            if (currentUser == null) {
+                                showLoginRequiredDialog = true
+                            } else {
+                                viewModel.addToCart(prod, quantity)
+                                viewModel.navigateTo(Screen.CHECKOUT)
+                            }
                         },
                         modifier = Modifier
                             .weight(1f)
@@ -142,45 +194,39 @@ fun ProductDetailScreen(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(220.dp)
-                    .background(
-                        when (prod.category) {
-                            "Mangoes" -> Color(0xFFFEF3C7)
-                            "Bananas & Plantains" -> Color(0xFFFFFBEB)
-                            "Preserved & Dehydrated" -> Color(0xFFFFEDD5)
-                            "Citrus & Melons" -> Color(0xFFECFDF5)
-                            else -> Color(0xFFF0FDF4)
-                        }
-                    ),
-                contentAlignment = Alignment.Center
+                    .height(240.dp)
             ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Icon(
-                        imageVector = when (prod.category) {
-                            "Mangoes" -> Icons.Default.Nature
-                            "Bananas & Plantains" -> Icons.Default.Spa
-                            "Preserved & Dehydrated" -> Icons.Default.DryCleaning
-                            "Citrus & Melons" -> Icons.Default.WaterDrop
-                            "Farm Bundles" -> Icons.Default.Inventory2
-                            else -> Icons.Default.Eco
-                        },
-                        contentDescription = prod.name,
-                        tint = ForestGreen,
-                        modifier = Modifier.size(90.dp)
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Surface(
-                        shape = RoundedCornerShape(20.dp),
-                        color = ForestGreen
-                    ) {
-                        Text(
-                            text = prod.preservationGrade,
-                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
-                            color = GoldenYellow,
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 11.sp
+                ProduceImage(
+                    product = prod,
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.Crop
+                )
+
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(
+                            androidx.compose.ui.graphics.Brush.verticalGradient(
+                                colors = listOf(Color.Black.copy(alpha = 0.4f), Color.Transparent, Color.Black.copy(alpha = 0.6f))
+                            )
                         )
-                    }
+                )
+
+                // Preservation grade pill
+                Surface(
+                    shape = RoundedCornerShape(20.dp),
+                    color = ForestGreen,
+                    modifier = Modifier
+                        .align(Alignment.BottomEnd)
+                        .padding(16.dp)
+                ) {
+                    Text(
+                        text = prod.preservationGrade,
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 5.dp),
+                        color = GoldenYellow,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 11.sp
+                    )
                 }
             }
 
@@ -269,7 +315,7 @@ fun ProductDetailScreen(
                             )
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
-                                text = "TropiVault Preservation Metrics",
+                                text = "FarmVault Preservation Metrics",
                                 style = MaterialTheme.typography.titleMedium.copy(
                                     fontWeight = FontWeight.Bold,
                                     color = DeepGreen
